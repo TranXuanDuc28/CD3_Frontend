@@ -18,6 +18,9 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Posts', href: '/posts', icon: DocumentTextIcon },
+  { name: 'Post Management', href: '/post-management', icon: PencilSquareIcon },
+  { name: 'Social Media', href: '/social-media', icon: ShareIcon },
 ];
 
 function classNames(...classes) {

@@ -7,32 +7,47 @@ export default function Header({ toggleSidebar }) {
   const { theme, toggleTheme, notifications } = useApp();
 
   return (
-    // Header container
-    <header className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-md">
-      {/* Left section: Sidebar toggle button */}
-      <div className="flex items-center">
-        <button
-          onClick={toggleSidebar}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"
-        >
-          <Bars3Icon className="h-6 w-6" />
-        </button>
-      </div>
-      {/* Right section: Theme toggle and notifications */}
-      <div className="flex items-center space-x-4">
-        {/* Theme toggle button */}
-        <button
-          onClick={toggleTheme}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"   
-        >
-          {theme === 'light' ? (
-            <MoonIcon className="h-6 w-6" />
-          ) : (
-            <SunIcon className="h-6 w-6" />
-          )}
-        </button>
-        {/* Notification center */}
-        <NotificationCenter notifications={notifications} />
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Left side */}
+        <div className="flex items-center">
+          <button
+            onClick={toggleSidebar}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md "
+          >
+            <Bars3Icon className="w-6 h-6" />
+          </button>
+          
+          <div className="hidden lg:block">
+            <h1 className="text-xl font-semibold text-gray-900">
+              Communication & PR
+            </h1>
+          </div>
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center space-x-4">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            {theme === 'light' ? (
+              <MoonIcon className="w-5 h-5" />
+            ) : (
+              <SunIcon className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* Notifications */}
+          <NotificationCenter />
+
+          {/* Status indicator */}
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-gray-600">Online</span>
+          </div>
+        </div>
       </div>
     </header>
   );
