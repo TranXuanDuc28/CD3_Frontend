@@ -18,6 +18,14 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Comments', href: '/comments', icon: ChatBubbleLeftRightIcon },
+  { name: 'Posts', href: '/posts', icon: DocumentTextIcon },
+  { name: 'Post Management', href: '/post-management', icon: PencilSquareIcon },
+  { name: 'Social Media', href: '/social-media', icon: ShareIcon },
+  { name: 'Visual Content', href: '/visual-content', icon: PhotoIcon },
+  { name: 'ChatAI', href: '/chatai', icon: CpuChipIcon },
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  { name: 'Settings', href: '/settings', icon: CogIcon },
 ];
 
 function classNames(...classes) {
@@ -52,7 +60,7 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
                 </div>
               </div>
               <div className="ml-3">
-                <h1 className="text-lg font-semibold text-white">n8n</h1>
+                <h1 className="text-lg font-semibold text-white">n8n Comments</h1>
               </div>
             </div>
           </div>
