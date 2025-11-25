@@ -94,5 +94,54 @@ export const postsService = {
       params: { limit }
     });
     return response.data;
+  },
+
+  // Get low engagement posts
+  getLowEngagement: async (limit = 5) => {
+    try {
+      const response = await api.post('/get-engagement', {
+        limit,
+        threshold: 'low'
+      });
+      // Return array with data structure supporting various response formats
+      return {
+        data: Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.posts || [])
+      };
+    } catch (error) {
+      console.warn('getLowEngagement error:', error);
+      return { data: [] };
+    }
+  },
+
+  // Get engagement details for a specific post
+  getEngagementForPost: async (postId) => {
+    try {
+      const response = await api.post('/get-engagement', {
+        postId
+      });
+      return {
+        data: Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.engagements || [])
+      };
+    } catch (error) {
+      console.warn('getEngagementForPost error:', error);
+      return { data: [] };
+    }
+  },
+
+  // Get media list
+  getMediaList: async () => {
+    try {
+      const response = await api.get('/media-list');
+      return Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.media || []);
+    } catch (error) {
+      console.warn('getMediaList error:', error);
+      return [];
+    }
+  },
+
+  // Delete a post
+  deletePost: async (postId) => {
+    const response = await api.delete(`/posts/${postId}`);
+    return response.data;
   }
 };

@@ -19,6 +19,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="comments" element={<Comments />} />
+            <Route path="posts" element={<Posts />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="post-management" element={<PostManagement />} />
+            <Route path="social-media" element={<SocialMedia />} />
+            <Route path="visual-content" element={<VisualContent />} />
+            <Route path="chatai" element={<ChatAI />} />
           </Route>
         </Routes>
       </Router>
