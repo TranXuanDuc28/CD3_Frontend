@@ -24,3 +24,12 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/cd3-frontend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/cd3-frontend:latest
+      - name: Trigger Production Deploy
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.TOKEN_GITHUB }}
+          repository: TranXuanDuc28/CD3_Production
+          workflow: deploy.yml
+          ref: main
+          inputs: |
+            service: frontend
