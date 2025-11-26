@@ -111,6 +111,7 @@ export default function PostManagement() {
       if (newPost.media instanceof File) {
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
         const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        console.log("cloudName",cloudName, "preset",preset);
         console.log('cloudName,preset', cloudName, preset);
         if (!cloudName || !preset) {
           throw new Error('Cloudinary not configured. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET');
