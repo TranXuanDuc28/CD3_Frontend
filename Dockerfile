@@ -1,23 +1,24 @@
-## Multi-stage Dockerfile: build the Vite frontend with Node, then copy the static `dist` into nginx
-
+# Stage 1: build frontend
 FROM node:18-alpine AS builder
-WORKDIR /duc/CD3_Frontend
 
-# Install deps (use npm ci for reproducible builds). Copy package files first for caching.
+WORKDIR /app
+
 COPY package*.json ./
 RUN npm install
-# Copy source and build
+
 COPY . .
 RUN npm run build
 
-## Final stage: nginx serving static files
+# Stage 2: nginx production
 FROM nginx:1.23.3
 
-# Remove default nginx html (optional) and copy built assets
+# Xoá mặc định và copy build frontend
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /duc/CD3_Frontend/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy a custom nginx config if present in the build context
+# Copy config Nginx nếu có
 COPY ./default.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
