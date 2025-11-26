@@ -37,7 +37,7 @@ export default function Dashboard() {
   const mockRecentComments = [
     {
       id: '1',
-      from: { name: 'Nguyễn Văn A' },
+      from: { name: 'Trần Xuân Đức' },
       message: 'Sản phẩm này có còn hàng không ạ?',
       created_time: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
       status: 'processed',
