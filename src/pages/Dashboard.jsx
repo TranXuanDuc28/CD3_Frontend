@@ -45,7 +45,7 @@ export default function Dashboard() {
     },
     {
       id: '2',
-      from: { name: 'Trần Thị B' },
+      from: { name: 'Ngô Thị Mỹ Lành' },
       message: 'Giá bao nhiêu vậy shop?',
       created_time: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
       status: 'pending'
