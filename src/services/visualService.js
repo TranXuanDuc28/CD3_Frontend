@@ -90,4 +90,11 @@ export const visualService = {
     const response = await api.get("/ab-test/analytics");
     return response.data;
   },
+
+  // Generate A/B test variants using AI
+  generateAbTestVariants: async (variantData) => {
+    const response = await api.post("/ab-test/generate-variants", variantData);
+    return response.data;
+  },
 };
+

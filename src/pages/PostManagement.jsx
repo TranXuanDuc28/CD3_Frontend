@@ -21,10 +21,12 @@ export default function PostManagement() {
   const { addNotification } = useApp();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
-    const [mediaList, setMediaList] = useState([]);
+  const [mediaList, setMediaList] = useState([]);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [lowEngagedPostIds, setLowEngagedPostIds] = useState(new Set());
   const [editingEngagements, setEditingEngagements] = useState([]);
+  const [postEngagements, setPostEngagements] = useState({});
+  const [loadingEngagements, setLoadingEngagements] = useState(false);
 
   const [newPost, setNewPost] = useState({
     title: '',
@@ -46,31 +48,61 @@ export default function PostManagement() {
   const { data: unpublishedPosts, execute: fetchUnpublishedPosts } = useApi(postsService.getUnpublishedPosts);
   useEffect(() => {
     // fetch posts and media list on mount
-      fetchPosts();
-      // fetch low-engagement posts
-      postsService.getLowEngagement(5).then(res => {
-        try {
-          const rows = res.data || [];
-          const ids = new Set(rows.map(e => {
-            // engagement row may include platformPost -> post -> id, or platformPost.post_id, or top-level post_id
-            return (e.platformPost && e.platformPost.post && e.platformPost.post.id)
-              || (e.platformPost && e.platformPost.post_id)
-              || e.post_id
-              || e.postId
-              || null;
-          }).filter(Boolean));
-          setLowEngagedPostIds(ids);
-        } catch (err) {
-          console.warn('Failed to parse low engagement response', err);
-        }
-      }).catch(() => setLowEngagedPostIds(new Set()));
-      if (typeof postsService.getMediaList === 'function') {
-        postsService.getMediaList()
-          .then((res) => setMediaList(res || []))
-          .catch(() => setMediaList([]));
+    fetchPosts();
+    // fetch low-engagement posts
+    postsService.getLowEngagement(5).then(res => {
+      try {
+        const rows = res.data || [];
+        const ids = new Set(rows.map(e => {
+          // engagement row may include platformPost -> post -> id, or platformPost.post_id, or top-level post_id
+          return (e.platformPost && e.platformPost.post && e.platformPost.post.id)
+            || (e.platformPost && e.platformPost.post_id)
+            || e.post_id
+            || e.postId
+            || null;
+        }).filter(Boolean));
+        setLowEngagedPostIds(ids);
+      } catch (err) {
+        console.warn('Failed to parse low engagement response', err);
       }
-      // optionally fetch other lists if needed
-    }, []);
+    }).catch(() => setLowEngagedPostIds(new Set()));
+    if (typeof postsService.getMediaList === 'function') {
+      postsService.getMediaList()
+        .then((res) => setMediaList(res || []))
+        .catch(() => setMediaList([]));
+    }
+    // optionally fetch other lists if needed
+  }, []);
+
+  // Fetch engagement data for all posts
+  useEffect(() => {
+    if (!posts || posts.length === 0) return;
+
+    const fetchAllEngagements = async () => {
+      setLoadingEngagements(true);
+      const engagementsMap = {};
+
+      console.log('🔍 Fetching engagement data for', posts.length, 'posts');
+
+      for (const post of posts) {
+        try {
+          console.log('📊 Fetching engagement for post:', post.id, post.title);
+          const res = await postsService.getEngagementForPost(post.id);
+          console.log('✅ Engagement response for', post.id, ':', res);
+          engagementsMap[post.id] = res.data || [];
+        } catch (err) {
+          console.warn(`❌ Failed to load engagement for post ${post.id}`, err);
+          engagementsMap[post.id] = [];
+        }
+      }
+
+      console.log('📈 Final engagements map:', engagementsMap);
+      setPostEngagements(engagementsMap);
+      setLoadingEngagements(false);
+    };
+
+    fetchAllEngagements();
+  }, [posts]);
 
   // When editingPost is set, fetch engagement rows for that post
   useEffect(() => {
@@ -91,17 +123,17 @@ export default function PostManagement() {
     return () => { cancelled = true; };
   }, [editingPost]);
   useEffect(() => {
-      let objectUrl;
-      if (newPost?.media instanceof File) {
-        objectUrl = URL.createObjectURL(newPost.media);
-        setMediaPreview(objectUrl);
-      } else {
-        setMediaPreview(newPost?.media?.url || null);
-      }
-      return () => {
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-      };
-    }, [newPost.media]);
+    let objectUrl;
+    if (newPost?.media instanceof File) {
+      objectUrl = URL.createObjectURL(newPost.media);
+      setMediaPreview(objectUrl);
+    } else {
+      setMediaPreview(newPost?.media?.url || null);
+    }
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [newPost.media]);
   const handleCreatePost = async (e) => {
     e.preventDefault();
     console.log('handleCreatePost called', { media: newPost.media, scheduledAt: newPost.scheduledAt });
@@ -136,6 +168,8 @@ export default function PostManagement() {
       } else if (newPost.media && newPost.media.url) {
         mediaUrl = newPost.media.url;
       }
+      console.log('Uploaded media to Cloudinary, got URL:', mediaUrl);
+
       // Build payload to send to backend. Backend should accept mediaUrl (string) or null.
       const payload = {
         title: newPost.title,
@@ -193,7 +227,36 @@ export default function PostManagement() {
     }
   };
 
+  // Helper function to get Facebook URL from post
+  const getFacebookUrl = (post) => {
+    if (!post.platformPosts || post.platformPosts.length === 0) {
+      return null;
+    }
+
+    const fbPost = post.platformPosts.find(pp => pp.platform === 'facebook');
+    if (!fbPost || !fbPost.platform_post_id) {
+      return null;
+    }
+
+    // Facebook post URL format: https://www.facebook.com/{post_id}
+    return `https://www.facebook.com/${fbPost.platform_post_id}`;
+  };
+
+  // Handle click on post to open Facebook
+  const handlePostClick = (post, e) => {
+    // Don't trigger if clicking on buttons
+    if (e.target.closest('button')) {
+      return;
+    }
+
+    const fbUrl = getFacebookUrl(post);
+    if (fbUrl) {
+      window.open(fbUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const getStatusBadge = (status) => {
+
     const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
     switch (status) {
       case 'published':
@@ -309,61 +372,101 @@ export default function PostManagement() {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts?.map((post) => (
-              <div key={post.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">{post.title}</h3>
-                      <span className={getStatusBadge(post.status)}>
-                        {post.status}
-                      </span>
-                      {lowEngagedPostIds.has(post.id) && (
-                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                          Low engagement
+            {posts?.map((post) => {
+              const engagements = postEngagements[post.id] || [];
+              const hasFacebookUrl = getFacebookUrl(post) !== null;
+
+              return (
+                <div
+                  key={post.id}
+                  className={`border border-gray-200 rounded-lg p-4 transition-colors ${hasFacebookUrl ? 'hover:bg-gray-50 cursor-pointer' : ''
+                    }`}
+                  onClick={(e) => handlePostClick(post, e)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-medium text-gray-900">{post.title}</h3>
+                        <span className={getStatusBadge(post.status)}>
+                          {post.status}
                         </span>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {post.content}
-                    </p>
-                    
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>Topic: {post.topic}</span>
-                      <span>Platform: {post.platform}</span>
-                      {post.useAI && (
-                        <span className="flex items-center space-x-1">
-                          <SparklesIcon className="w-3 h-3" />
-                          <span>AI Generated</span>
+                        {lowEngagedPostIds.has(post.id) && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            Low engagement
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {post.content}
+                      </p>
+
+                      <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
+                        <span>Topic: {post.topic}</span>
+                        <span>Platform: {post.platform}</span>
+                        {post.useAI && (
+                          <span className="flex items-center space-x-1">
+                            <SparklesIcon className="w-3 h-3" />
+                            <span>AI Generated</span>
+                          </span>
+                        )}
+                        <span>
+                          Created: {formatVietnamTime(post.created_at, 'YYYY-MM-DD HH:mm:ss')}
                         </span>
-                      )}
-                      <span>
-                        Created: {formatVietnamTime(post.created_at, 'YYYY-MM-DD HH:mm:ss')}
-                      </span>
+                      </div>
+
+                      {/* Engagement Metrics */}
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        {loadingEngagements ? (
+                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <LoadingSpinner size="sm" />
+                            <span>Đang tải dữ liệu tương tác...</span>
+                          </div>
+                        ) : engagements.length > 0 ? (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-gray-700">Lượt tương tác:</p>
+                            {engagements.map((eng) => (
+                              <div key={eng.id} className="flex items-center space-x-4 text-xs text-gray-600">
+                                <span className="font-medium text-blue-600">{eng.platform}</span>
+                                <span>👍 {eng.likes || 0}</span>
+                                <span>💬 {eng.comments || 0}</span>
+                                <span>🔄 {eng.shares || 0}</span>
+                                <span>👁️ {eng.views || 0}</span>
+                                {eng.engagement_score > 0 && (
+                                  <span className="ml-auto font-medium">Score: {eng.engagement_score}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">
+                            Chưa có dữ liệu tương tác
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {post.status === 'pending' && (
+
+                    <div className="flex items-center space-x-2">
+                      {post.status === 'pending' && (
+                        <button
+                          onClick={() => handleUpdateStatus(post.id, post.id, 'published')}
+                          className="text-green-600 hover:text-green-700 text-sm font-medium"
+                        >
+                          Publish
+                        </button>
+                      )}
+
                       <button
-                        onClick={() => handleUpdateStatus(post.id, post.id, 'published')}
-                        className="text-green-600 hover:text-green-700 text-sm font-medium"
+                        onClick={() => setEditingPost(post)}
+                        className="text-blue-600 hover:text-blue-700"
                       >
-                        Publish
+                        <PencilIcon className="w-4 h-4" />
                       </button>
-                    )}
-                    
-                    <button
-                      onClick={() => setEditingPost(post)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </Card>
@@ -373,7 +476,7 @@ export default function PostManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Post</h2>
-            
+
             <form onSubmit={handleCreatePost} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -534,13 +637,13 @@ export default function PostManagement() {
                   type="datetime-local"
                   className="input"
                   value={newPost.scheduledAt ? fromVietnamISOString(newPost.scheduledAt) : ''}
-                  onChange={(e) => setNewPost(prev => ({ 
-                    ...prev, 
-                    scheduledAt: e.target.value ? toVietnamISOString(e.target.value) : null 
+                  onChange={(e) => setNewPost(prev => ({
+                    ...prev,
+                    scheduledAt: e.target.value ? toVietnamISOString(e.target.value) : null
                   }))}
                 />
               </div>
-              
+
 
               <div className="flex items-center space-x-2">
                 <input
