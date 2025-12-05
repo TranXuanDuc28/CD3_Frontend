@@ -35,7 +35,9 @@ export default function PostManagement() {
     useAI: false,
     media: null,
     platform: ['facebook'],
-    scheduledAt: null
+    scheduledAt: null,
+    isSpecialOccasion: false,
+    specialOccasionType: ''
   });
 
   // Fetch all posts
@@ -179,6 +181,8 @@ export default function PostManagement() {
         useAI: newPost.useAI,
         platform: newPost.platform,
         scheduledAt: newPost.scheduledAt || null,
+        isSpecialOccasion: newPost.isSpecialOccasion,
+        specialOccasionType: newPost.specialOccasionType,
         mediaUrl
       };
 
@@ -657,6 +661,46 @@ export default function PostManagement() {
                 <label htmlFor="useAI" className="text-sm text-gray-700">
                   Use AI for content optimization
                 </label>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="isSpecialOccasion"
+                    checked={newPost.isSpecialOccasion}
+                    onChange={(e) => setNewPost(prev => ({ ...prev, isSpecialOccasion: e.target.checked }))}
+                    className="mr-2"
+                  />
+                  <label htmlFor="isSpecialOccasion" className="text-sm font-medium text-gray-700">
+                    Đây là bài đăng dịp đặc biệt (Gửi thông báo Messenger)
+                  </label>
+                </div>
+
+                {newPost.isSpecialOccasion && (
+                  <div className="ml-6">
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Loại dịp đặc biệt
+                    </label>
+                    <select
+                      className="input w-full max-w-xs"
+                      value={newPost.specialOccasionType}
+                      onChange={(e) => setNewPost(prev => ({ ...prev, specialOccasionType: e.target.value }))}
+                    >
+                      <option value="">-- Chọn dịp --</option>
+                      <option value="Tết">Tết Nguyên Đán</option>
+                      <option value="Noel">Giáng Sinh</option>
+                      <option value="Black Friday">Black Friday</option>
+                      <option value="Valentine">Valentine</option>
+                      <option value="Sinh Nhật">Sinh Nhật</option>
+                      <option value="8/3">Quốc Tế Phụ Nữ 8/3</option>
+                      <option value="Khác">Sự kiện khác</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      * Tin nhắn sẽ được gửi tự động đến khách hàng đã tương tác trong 5 ngày qua.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

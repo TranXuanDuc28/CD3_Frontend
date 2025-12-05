@@ -19,12 +19,12 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Comments', href: '/comments', icon: ChatBubbleLeftRightIcon },
-  { name: 'Posts', href: '/posts', icon: DocumentTextIcon },
+  // { name: 'Posts', href: '/posts', icon: DocumentTextIcon },
   { name: 'Post Management', href: '/post-management', icon: PencilSquareIcon },
   { name: 'Social Media', href: '/social-media', icon: ShareIcon },
   { name: 'Visual Content', href: '/visual-content', icon: PhotoIcon },
   { name: 'ChatAI', href: '/chatai', icon: CpuChipIcon },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  // { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Settings', href: '/settings', icon: CogIcon },
 ];
 
@@ -39,7 +39,7 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
     <>
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 lg:hidden bg-gray-600 bg-opacity-75"
           onClick={toggleSidebar}
         />

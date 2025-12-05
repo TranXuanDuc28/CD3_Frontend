@@ -41,6 +41,8 @@ export default function VisualContent() {
     scheduledAt: "",
     slides: [],
     useAI: false, // Toggle for AI-powered variant generation
+    isSpecialOccasion: false,
+    specialOccasionType: "",
   });
 
   // Variant generation state (used when useAI is true)
@@ -136,6 +138,8 @@ export default function VisualContent() {
           variantCount: abTestData.variantCount,
           slides: Array.isArray(abTestData.slides) ? abTestData.slides : [],
           scheduledAt: abTestData.scheduledAt || "",
+          isSpecialOccasion: abTestData.isSpecialOccasion,
+          specialOccasionType: abTestData.specialOccasionType,
         };
       } else {
         webhookData = {
@@ -148,6 +152,8 @@ export default function VisualContent() {
           projectId: abTestData.projectId,
           variantCount: abTestData.variantCount,
           scheduledAt: abTestData.scheduledAt || "",
+          isSpecialOccasion: abTestData.isSpecialOccasion,
+          specialOccasionType: abTestData.specialOccasionType,
         };
       }
 
@@ -168,6 +174,8 @@ export default function VisualContent() {
         variantCount: 2,
         scheduledAt: "",
         slides: [],
+        isSpecialOccasion: false,
+        specialOccasionType: "",
       });
     } catch (error) {
       console.error(error);
@@ -295,6 +303,8 @@ export default function VisualContent() {
         scheduledAt: abTestData.scheduledAt || "",
         style: abTestData.style,
         dimensions: abTestData.dimensions,
+        isSpecialOccasion: abTestData.isSpecialOccasion,
+        specialOccasionType: abTestData.specialOccasionType,
         // Gửi message của variant đầu tiên làm message chính
         message: generatedVariants[0].message,
         // Có thể thêm variants vào metadata nếu cần
@@ -797,6 +807,47 @@ export default function VisualContent() {
                     }))
                   }
                 />
+              </div>
+
+              {/* Special Occasion */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="isSpecialOccasionAb"
+                    checked={abTestData.isSpecialOccasion}
+                    onChange={(e) => setAbTestData(prev => ({ ...prev, isSpecialOccasion: e.target.checked }))}
+                    className="mr-2"
+                  />
+                  <label htmlFor="isSpecialOccasionAb" className="text-sm font-medium text-gray-700">
+                    Đây là bài đăng dịp đặc biệt (Gửi thông báo Messenger)
+                  </label>
+                </div>
+
+                {abTestData.isSpecialOccasion && (
+                  <div className="ml-6">
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Loại dịp đặc biệt
+                    </label>
+                    <select
+                      className="input w-full max-w-xs"
+                      value={abTestData.specialOccasionType}
+                      onChange={(e) => setAbTestData(prev => ({ ...prev, specialOccasionType: e.target.value }))}
+                    >
+                      <option value="">-- Chọn dịp --</option>
+                      <option value="Tết">Tết Nguyên Đán</option>
+                      <option value="Noel">Giáng Sinh</option>
+                      <option value="Black Friday">Black Friday</option>
+                      <option value="Valentine">Valentine</option>
+                      <option value="Sinh Nhật">Sinh Nhật</option>
+                      <option value="8/3">Quốc Tế Phụ Nữ 8/3</option>
+                      <option value="Khác">Sự kiện khác</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      * Tin nhắn sẽ được gửi tự động đến khách hàng đã tương tác trong 5 ngày qua.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
