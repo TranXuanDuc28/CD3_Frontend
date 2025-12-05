@@ -1,43 +1,42 @@
 // Frontend timezone utilities for Vietnam timezone (UTC+7)
 
 /**
- * Convert datetime-local input value to Vietnam timezone ISO string
+ * Convert datetime-local input value to ISO string
+ * datetime-local already uses browser's local time, so we just need to convert to ISO
  * @param {string} datetimeLocalValue - Value from datetime-local input (YYYY-MM-DDTHH:MM)
- * @returns {string} - ISO string in Vietnam timezone
+ * @returns {string} - ISO string
  */
 export function toVietnamISOString(datetimeLocalValue) {
   if (!datetimeLocalValue) return null;
-  
-  // Create date from local input (browser interprets as local time)
+
+  // datetime-local value is in format "YYYY-MM-DDTHH:MM"
+  // Create Date object - this will be interpreted as local time
   const localDate = new Date(datetimeLocalValue);
-  
-  // Get Vietnam timezone offset (+7 hours = 420 minutes)
-  const vietnamOffset = 7 * 60; // 420 minutes
-  
-  // Convert to Vietnam time by adding the offset
-  const vietnamTime = new Date(localDate.getTime() + (vietnamOffset * 60 * 1000));
-  
-  return vietnamTime.toISOString();
+
+  // Return ISO string - backend will handle timezone conversion
+  return localDate.toISOString();
 }
 
 /**
- * Convert Vietnam timezone ISO string to datetime-local input value
- * @param {string} vietnamISOString - ISO string from backend
- * @returns {string} - Value for datetime-local input
+ * Convert ISO string to datetime-local input value
+ * @param {string} isoString - ISO string from backend
+ * @returns {string} - Value for datetime-local input (YYYY-MM-DDTHH:MM)
  */
-export function fromVietnamISOString(vietnamISOString) {
-  if (!vietnamISOString) return '';
-  
-  // Create date from ISO string
-  const date = new Date(vietnamISOString);
-  
-  // Get Vietnam timezone offset (+7 hours = 420 minutes)
-  const vietnamOffset = 7 * 60; // 420 minutes
-  
-  // Convert from Vietnam time to local time by subtracting the offset
-  const localTime = new Date(date.getTime() - (vietnamOffset * 60 * 1000));
-  
-  return localTime.toISOString().slice(0, 16);
+export function fromVietnamISOString(isoString) {
+  if (!isoString) return '';
+
+  // Create date from ISO string (UTC)
+  const date = new Date(isoString);
+
+  // Get local time components
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  // Return in datetime-local format
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 /**
@@ -48,13 +47,13 @@ export function fromVietnamISOString(vietnamISOString) {
  */
 export function formatVietnamTime(date, format = 'YYYY-MM-DD HH:mm:ss') {
   if (!date) return '';
-  
+
   const dateObj = new Date(date);
-  
+
   // Get Vietnam timezone offset (+7 hours = 420 minutes)
   const vietnamOffset = 7 * 60;
   const vietnamTime = new Date(dateObj.getTime() + (vietnamOffset * 60 * 1000));
-  
+
   // Format based on requested format
   switch (format) {
     case 'YYYY-MM-DD HH:mm:ss':
@@ -93,7 +92,7 @@ export function addVietnamTime(date, amount, unit) {
   const baseDate = new Date(date);
   const vietnamOffset = 7 * 60;
   const vietnamTime = new Date(baseDate.getTime() + (vietnamOffset * 60 * 1000));
-  
+
   let newTime;
   switch (unit) {
     case 'minutes':
@@ -108,7 +107,7 @@ export function addVietnamTime(date, amount, unit) {
     default:
       newTime = vietnamTime;
   }
-  
+
   return newTime;
 }
 
@@ -123,7 +122,7 @@ export function subtractVietnamTime(date, amount, unit) {
   const baseDate = new Date(date);
   const vietnamOffset = 7 * 60;
   const vietnamTime = new Date(baseDate.getTime() + (vietnamOffset * 60 * 1000));
-  
+
   let newTime;
   switch (unit) {
     case 'minutes':
@@ -138,7 +137,7 @@ export function subtractVietnamTime(date, amount, unit) {
     default:
       newTime = vietnamTime;
   }
-  
+
   return newTime;
 }
 
@@ -149,11 +148,11 @@ export function subtractVietnamTime(date, amount, unit) {
  */
 export function isPastVietnamTime(date) {
   if (!date) return false;
-  
+
   const checkDate = new Date(date);
   const vietnamOffset = 7 * 60;
   const vietnamCheckTime = new Date(checkDate.getTime() + (vietnamOffset * 60 * 1000));
-  
+
   return vietnamCheckTime < getVietnamNow();
 }
 
@@ -164,17 +163,17 @@ export function isPastVietnamTime(date) {
  */
 export function getRelativeVietnamTime(date) {
   if (!date) return '';
-  
+
   const checkDate = new Date(date);
   const vietnamOffset = 7 * 60;
   const vietnamCheckTime = new Date(checkDate.getTime() + (vietnamOffset * 60 * 1000));
   const now = getVietnamNow();
-  
+
   const diffMs = vietnamCheckTime.getTime() - now.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
+
   if (diffMs < 0) {
     // Past
     if (Math.abs(diffMinutes) < 60) {
